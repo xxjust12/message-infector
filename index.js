@@ -1,29 +1,24 @@
-// Message Injector Plugin for Kettu
-// Inject fake client-sided messages from any user
-
+const { findByStoreName, findByProps } = vendetta.metro;
 const { React, ReactNative: RN } = vendetta.metro.common;
 const { Forms } = vendetta.ui.components;
 const { useProxy } = vendetta.storage;
-const { findByProps, findByStoreName } = vendetta.metro;
 const { storage } = vendetta.plugin;
 const { showToast } = vendetta.ui.toasts;
 
-const { FormSection, FormInput, FormRow } = Forms;
 const { ScrollView, View, Text, TouchableOpacity, TextInput, Alert, Clipboard, StyleSheet } = RN;
 
 // Discord internals
 const ChannelStore = findByStoreName("ChannelStore");
 const UserStore = findByStoreName("UserStore");
-const MessageStore = findByStoreName("MessageStore");
 const FluxDispatcher = findByProps("dispatch", "subscribe");
 
 // Initialize storage defaults
-if (storage.targetUserId === undefined) storage.targetUserId = "";
-if (storage.senderUserId === undefined) storage.senderUserId = "";
-if (storage.messageContent === undefined) storage.messageContent = "";
-if (storage.embedTitle === undefined) storage.embedTitle = "";
-if (storage.embedDescription === undefined) storage.embedDescription = "";
-if (storage.embedImageUrl === undefined) storage.embedImageUrl = "";
+storage.targetUserId ??= "";
+storage.senderUserId ??= "";
+storage.messageContent ??= "";
+storage.embedTitle ??= "";
+storage.embedDescription ??= "";
+storage.embedImageUrl ??= "";
 
 // Function to inject a fake message
 async function injectFakeMessage() {
@@ -62,7 +57,6 @@ async function injectFakeMessage() {
         }
 
         if (!channelId) {
-            // Generate a fake channel ID if no DM exists
             channelId = String(Date.now() * 4194304 + Math.floor(Math.random() * 4194304));
         }
 
@@ -121,7 +115,7 @@ async function injectFakeMessage() {
             isPushNotification: false,
         });
 
-        showToast("✅ Fake message sent!", { type: 1 });
+        showToast("✅ Fake message sent!", 1);
 
     } catch (error) {
         console.error("Message Injector Error:", error);
@@ -158,7 +152,7 @@ async function pasteFromClipboard(field) {
         const text = await Clipboard.getString();
         if (text) {
             storage[field] = text;
-            showToast("📋 Pasted!", { type: 1 });
+            showToast("📋 Pasted!", 1);
         }
     } catch (e) {
         Alert.alert("Error", "Failed to paste from clipboard");
@@ -245,18 +239,15 @@ function Settings() {
     useProxy(storage);
 
     return React.createElement(ScrollView, { style: styles.container },
-        // Header Section
         React.createElement(View, { style: styles.section },
             React.createElement(Text, { style: styles.sectionTitle }, "MESSAGE FAKER"),
             React.createElement(Text, { style: styles.description }, "💬 Inject fake messages into DMs from anyone.")
         ),
 
-        // Create Fake Message Section
         React.createElement(View, { style: styles.section },
             React.createElement(Text, { style: styles.sectionTitle }, "CREATE FAKE MESSAGE"),
             React.createElement(Text, { style: styles.description }, "📝 Create a fake message in someone's DM"),
 
-            // Target User ID
             React.createElement(Text, { style: styles.label }, "TARGET USER ID (Whose DM)"),
             React.createElement(Text, { style: styles.sublabel }, "User ID of person whose DM you want to inject into"),
             React.createElement(TextInput, {
@@ -274,7 +265,6 @@ function Settings() {
                 React.createElement(Text, { style: styles.buttonText }, "📋 Paste Target User ID")
             ),
 
-            // Sender User ID
             React.createElement(Text, { style: styles.label }, "FROM USER ID (Who message is from)"),
             React.createElement(Text, { style: styles.sublabel }, "User ID of who the message appears to be from"),
             React.createElement(TextInput, {
@@ -292,7 +282,6 @@ function Settings() {
                 React.createElement(Text, { style: styles.buttonText }, "📋 Paste Sender User ID")
             ),
 
-            // Message Content
             React.createElement(Text, { style: styles.label }, "MESSAGE CONTENT"),
             React.createElement(Text, { style: styles.sublabel }, "The message text"),
             React.createElement(TextInput, {
@@ -304,10 +293,8 @@ function Settings() {
                 multiline: true
             }),
 
-            // Optional Embed Header
             React.createElement(Text, { style: [styles.label, { marginTop: 24 }] }, "🔗 Optional: Add an embed"),
 
-            // Embed Title
             React.createElement(Text, { style: styles.label }, "EMBED TITLE"),
             React.createElement(Text, { style: styles.sublabel }, "Optional embed title"),
             React.createElement(TextInput, {
@@ -318,7 +305,6 @@ function Settings() {
                 placeholderTextColor: "#4e5058"
             }),
 
-            // Embed Description
             React.createElement(Text, { style: styles.label }, "EMBED DESCRIPTION"),
             React.createElement(Text, { style: styles.sublabel }, "Optional embed description"),
             React.createElement(TextInput, {
@@ -330,7 +316,6 @@ function Settings() {
                 multiline: true
             }),
 
-            // Embed Image URL
             React.createElement(Text, { style: styles.label }, "EMBED IMAGE URL"),
             React.createElement(Text, { style: styles.sublabel }, "Optional image URL"),
             React.createElement(TextInput, {
@@ -341,7 +326,6 @@ function Settings() {
                 placeholderTextColor: "#4e5058"
             }),
 
-            // Send Button
             React.createElement(TouchableOpacity, {
                 style: styles.sendButton,
                 onPress: injectFakeMessage
@@ -349,7 +333,6 @@ function Settings() {
                 React.createElement(Text, { style: styles.buttonText }, "✉️ Send Fake Message")
             ),
 
-            // Quick Test Button
             React.createElement(TouchableOpacity, {
                 style: styles.testButton,
                 onPress: sendQuickTest
@@ -358,7 +341,6 @@ function Settings() {
             )
         ),
 
-        // Console API Section
         React.createElement(View, { style: styles.section },
             React.createElement(Text, { style: styles.sectionTitle }, "CONSOLE API"),
             React.createElement(Text, { style: styles.description }, "🔧 You can also use the console for advanced usage:\n\nwindow.injectMessage()")
@@ -367,15 +349,14 @@ function Settings() {
 }
 
 // Plugin exports
-export const onLoad = () => {
+export function onLoad() {
     window.injectMessage = injectFakeMessage;
     console.log("[Message Injector] Plugin loaded!");
-};
+}
 
-export const onUnload = () => {
+export function onUnload() {
     delete window.injectMessage;
     console.log("[Message Injector] Plugin unloaded!");
-};
+}
 
 export const settings = Settings;
-
